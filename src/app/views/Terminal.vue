@@ -299,7 +299,8 @@
               </el-input> -->
               <CommandInput
                 style="width: 100%"
-                v-model="command"
+                :value="command"
+                @change="(text) => (command = text)"
                 :configType="instanceInfo && instanceInfo.config ? instanceInfo.config.type : null"
                 @sendCommand="() => sendCommand(command)"
               ></CommandInput>

@@ -5,6 +5,7 @@
     :debounce="50"
     :fetch-suggestions="querySearch"
     :select-when-unmatched="false"
+    :trigger-on-focus="false"
     class="inline-input"
     placeholder="此处可输入命令，按回车执行"
     @select="handleSelect"
@@ -16,10 +17,6 @@
 <script>
 import { COMMAND_CONFIGS } from "../app/service/command_config";
 export default {
-  model: {
-    prop: "value",
-    event: "change"
-  },
   props: {
     value: {
       type: String
@@ -47,7 +44,9 @@ export default {
       };
     },
     querySearch(text, callback) {
-      this.$emit("change", text);
+      this.command = text;
+      this.$emit("change", this.command);
+      // console.log("querySearch  ==> " + text);
       if (!text) return callback([]);
       const commandSlices = text.split(" ");
       if (commandSlices.length === 1) {
@@ -84,8 +83,10 @@ export default {
       callback([]);
     },
     handleSelect(item) {
+      // console.log("handleSelect  ==> " + item.command);
       this.command = item.command;
       this.$refs.commandInput.focus();
+      this.$emit("change", item.command);
     },
     addEventListener() {
       window.addEventListener("keydown", this.keyFun, true);
@@ -121,8 +122,9 @@ export default {
   },
   watch: {
     value(now) {
-      console.log(now);
-      this.command = now;
+      if (now !== this.command) {
+        this.command = now;
+      }
     },
     configType(configType) {
       const allCommand = this.commandConfigs.find((r) => r.type === configType);
