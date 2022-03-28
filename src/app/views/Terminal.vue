@@ -252,7 +252,7 @@
           <div class="terminal-wrapper">
             <div id="terminal-container" style="height: 560px; width: 100%"></div>
             <div id="terminal-input-wrapper">
-              <el-input
+              <!-- <el-input
                 placeholder="此处可输入命令，按回车键执行"
                 prefix-icon="el-icon-arrow-right"
                 size="mini"
@@ -260,7 +260,13 @@
                 ref="terminalCommandInput"
                 @keyup.enter="sendCommand(command)"
               >
-              </el-input>
+              </el-input> -->
+              <CommandInput
+                style="width: 100%"
+                v-model="command"
+                :configType="instanceInfo && instanceInfo.config ? instanceInfo.config.type : null"
+                @sendCommand="() => sendCommand(command)"
+              ></CommandInput>
             </div>
           </div>
         </template>
@@ -447,6 +453,7 @@ import { ElNotification } from "element-plus";
 import { statusCodeToText, typeTextToReadableText } from "../service/instance_tools";
 import { initTerminalWindow, textToTermText } from "../service/term";
 import { getPlayersOption } from "../service/chart_option";
+import CommandInput from "../../components/CommandInput";
 
 export default {
   data: function () {
@@ -502,7 +509,7 @@ export default {
     }
   },
   // eslint-disable-next-line vue/no-unused-components
-  components: { Panel, LineInfo, LineButton, Dialog },
+  components: { Panel, LineInfo, LineButton, Dialog, CommandInput },
   methods: {
     // 请求数据源(Ajax)
     async renderFromAjax() {
@@ -594,10 +601,10 @@ export default {
     },
     selectHistoryCommand(item) {
       this.command = item;
-      console.log(this.$refs.terminalCommandInput.focus());
     },
     pushHistoryCommand(cmd) {
       if (cmd.trim().length <= 0) return;
+      this.commandhistory = Array.from(new Set(this.commandhistory)).filter((r) => r != cmd);
       this.commandhistory.unshift(cmd);
       if (this.commandhistory.length > 40) {
         this.commandhistory.pop();
@@ -698,13 +705,14 @@ export default {
     },
     // 使用Websocket发送命令
     sendCommand(command, method) {
+      console.log(command);
       if (!this.socket || !this.available)
         return this.$message({ message: "无法执行命令，数据流通道不可用", type: "error" });
       if (!this.isStarted)
         return this.$message({ message: "无法执行命令，服务器未开启", type: "error" });
       if (method !== 1) this.pushHistoryCommand(command);
       this.socket.emit("stream/input", {
-        data: { command }
+        data: { command: command.replace("/", "") }
       });
       this.command = "";
     },
